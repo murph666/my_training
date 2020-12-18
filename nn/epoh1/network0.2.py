@@ -50,3 +50,7 @@ class NeuralNetwork:
     def train(self, data, all_y_trues):
         learn_rate = 0.1
         epochs = 100
+
+        for epoh in range(epochs):
+            pass
+
