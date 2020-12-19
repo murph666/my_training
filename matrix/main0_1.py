@@ -327,6 +327,79 @@ class Matrix:
         res = self * C_speudo
         return res
 
+    def mini_det(self):
+        res = 0
+        flag = True
+        for col in range(self.cols):
+            a_1_col = self[0][col]
+            tmat = []
+            for trow in range(1, self.rows):
+                for tcol in range(self.cols):
+                    if tcol != col:
+                        tmat.append(self[trow][tcol])
+            if flag:
+                res += a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
+                flag = False
+            else:
+                res -= a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
+                flag = True
+        return res
+
+    def determinant(self):
+        res = 0
+        flag = True
+        for main_col in range(self.cols):
+            a_1_col = self[0][main_col]
+            tmat = []
+            for row in range(1, self.rows):
+                for col in range(self.cols):
+                    if col != main_col:
+                        tmat.append(self[row][col])
+            tmat = Matrix([self.rows - 1, self.cols - 1], tmat)
+
+            if tmat.rows == tmat.cols == 3:
+                if flag:
+                    res += a_1_col * tmat.mini_det()
+                    flag = False
+                else:
+                    res -= a_1_col * tmat.mini_det()
+                    flag = True
+            else:
+                tmat.determinant()
+        return res
+
+
+
+
+
+
+        # res = 0
+        # for a in range(self.cols):
+        #     temp_mat = []
+        #     for row in range(self.rows):
+        #         for col in range(self.cols):
+        #             if row != 0 and col != a:
+        #                 temp_mat.append(self[row][col])
+        #     temp_mat = Matrix([len(self[a + 1::]), len(self[a + 1::])], temp_mat)
+        #     print(temp_mat)
+        #     flag = True
+        #     if temp_mat.rows == temp_mat.cols == 3:
+        #         for col in range(temp_mat.cols):
+        #             a_1_col = temp_mat[0][col]
+        #             tmat = []
+        #             for trow in range(temp_mat.rows):
+        #                 for tcol in range(temp_mat.cols):
+        #                     if trow != 0 and tcol != temp_mat[0][col]:
+        #                         tmat.append(temp_mat[trow][tcol])
+        #             if flag:
+        #                 res += a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
+        #                 flag = False
+        #             else:
+        #                 res -= a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
+        #                 flag = True
+        #         print(res)
+        #     temp_mat.determinant()
+
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
 # exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
@@ -334,14 +407,14 @@ class Matrix:
 # exGrevil = Matrix([4, 3], [1,-1,0,-1,2,1,2,-3,-1,0,1,1])
 # exGrevil = Matrix([3, 4], [1, -1, 2, 0, -1, 2, -3, 1, 0, 1, -1, 1])
 # exGauss = Matrix([3, 4], [1, 2, 3, 4, 1, 2, 5, 6, 3, 6, 13, 16])
-ex_skeletal = Matrix([3, 4], [2, 1, 1, 3, 1, 0, 1, -1, 1, 1, 0, 4])
+ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
+# ex_skeletal = Matrix([3, 3], [1, -2, 3, 4, 0, 6, -7, 8, 9])
 
 # print(exGauss)
 print(ex_skeletal)
 
-print(ex_skeletal.skelet_decomposition())
+print(ex_skeletal.determinant())
 # print(exGauss.gauss())
-
 
 # numMatrixA = np.array([[1, 2, 3], [4, 5, 6]])
 # numMatrixB = np.array([[7, 8], [9, 1], [2, 3]])
