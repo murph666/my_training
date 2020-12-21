@@ -1,4 +1,5 @@
 from copy import deepcopy
+from math import sqrt
 from decimal import Decimal
 import numpy as np
 
@@ -136,6 +137,16 @@ class Matrix:
         res.matrix[count], res.matrix[max_row] = res.matrix[max_row], res.matrix[count]
         return res
 
+    def change(self, el, index, opt=''):
+        if opt == 'row':
+            for col in range(self.cols):
+                self[col] = el[col]
+        elif opt == 'col':
+            for row in range(self.rows):
+                self[row][index] = el[row][0]
+        else:
+            return 'error'
+
     def mul_row_by_el(self, row, el):
         res = deepcopy(self)
         if isinstance(el, (int, float)):
@@ -248,10 +259,115 @@ class Matrix:
         res = Matrix((row, self.cols), temp_el)
         return res
 
-    def invertible_matrix(self):
-        for row in range(self.rows):
-            for col in range(self.cols):
-                self[row][row] = 1 / self[row][row]
+    def mini_det(self):
+        res = 0
+        flag = True
+        for col in range(self.cols):
+            a_1_col = self[0][col]
+            tmat = []
+            for trow in range(1, self.rows):
+                for tcol in range(self.cols):
+                    if tcol != col:
+                        tmat.append(self[trow][tcol])
+            if flag:
+                res += a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
+                flag = False
+            else:
+                res -= a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
+                flag = True
+        return res
+
+    def determinant(self):
+        res = 0
+        flag = True
+        for main_col in range(self.cols):
+            a_1_col = self[0][main_col]
+            tmat = []
+            for row in range(1, self.rows):
+                for col in range(self.cols):
+                    if col != main_col:
+                        tmat.append(self[row][col])
+            tmat = Matrix([self.rows - 1, self.cols - 1], tmat)
+
+            if tmat.rows == tmat.cols == 3:
+                if flag:
+                    res += a_1_col * tmat.mini_det()
+                    flag = False
+                else:
+                    res -= a_1_col * tmat.mini_det()
+                    flag = True
+            else:
+                tmat.determinant()
+        return res
+
+        # res = 0
+        # for a in range(self.cols):
+        #     temp_mat = []
+        #     for row in range(self.rows):
+        #         for col in range(self.cols):
+        #             if row != 0 and col != a:
+        #                 temp_mat.append(self[row][col])
+        #     temp_mat = Matrix([len(self[a + 1::]), len(self[a + 1::])], temp_mat)
+        #     print(temp_mat)
+        #     flag = True
+        #     if temp_mat.rows == temp_mat.cols == 3:
+        #         for col in range(temp_mat.cols):
+        #             a_1_col = temp_mat[0][col]
+        #             tmat = []
+        #             for trow in range(temp_mat.rows):
+        #                 for tcol in range(temp_mat.cols):
+        #                     if trow != 0 and tcol != temp_mat[0][col]:
+        #                         tmat.append(temp_mat[trow][tcol])
+        #             if flag:
+        #                 res += a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
+        #                 flag = False
+        #             else:
+        #                 res -= a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
+        #                 flag = True
+        #         print(res)
+        #     temp_mat.determinant()
+
+    @staticmethod
+    def scalar_multiplication(a, b):
+        res = 0
+        for row in range(a.rows):
+            res += a[row][0] * b[row][0]
+        return res
+
+    def projection(self, b):
+        res = Matrix.scalar_multiplication(self, b)
+        denumirator = Matrix.scalar_multiplication(self, self)
+        res /= denumirator
+        res = self * res
+        return res
+
+    def ortoganal_set(self):
+        P = Matrix([self.rows, 1], 0)
+        res = Matrix([self.rows, self.cols], 0)
+        cur_b = self.get_col(0)
+        res.change(cur_b, 0, 'col')
+        for main_col in range(1, self.cols):
+            cur_a = self.get_col(main_col)
+            for col in range(main_col):
+                cur_b = res.get_col(col)
+                P_cur = cur_b.projection(cur_a)
+                P = P + P_cur
+
+            cur_b = cur_a - P
+            res.change(cur_b, main_col, 'col')
+            P = Matrix([self.rows, 1], 0)
+        return res
+
+    def normalization(self):
+        res = deepcopy(self)
+        for col in range(res.cols):
+            cur_col = res.get_col(col=col)
+            cur_col_length = 0
+            for rw in range(cur_col.rows):
+                cur_col_length += cur_col[rw][0] ** 2
+            cur_col_length = 1 / sqrt(cur_col_length)
+            res = res.mul_col_by_el(col, cur_col_length)
+        return res
 
     def check_zero(self):
         if isinstance(self, Matrix):
@@ -311,7 +427,7 @@ class Matrix:
                 b_col = d_col.transposition()
                 b_col = b_col * b_col1
                 b_col = b_col * A_col
-                # b_col = A_col * b_col.transposition()
+                # b_col = A_col * b_col.transposition()ё
                 # b_col = b_col.mul_row_by_el(0, d_col1)
 
             B_col = d_col * b_col
@@ -327,78 +443,13 @@ class Matrix:
         res = self * C_speudo
         return res
 
-    def mini_det(self):
-        res = 0
-        flag = True
-        for col in range(self.cols):
-            a_1_col = self[0][col]
-            tmat = []
-            for trow in range(1, self.rows):
-                for tcol in range(self.cols):
-                    if tcol != col:
-                        tmat.append(self[trow][tcol])
-            if flag:
-                res += a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
-                flag = False
-            else:
-                res -= a_1_col * (tmat[0] * tmat[3] - tmat[1] * tmat[2])
-                flag = True
-        return res
-
-    def determinant(self):
-        res = 0
-        flag = True
-        for main_col in range(self.cols):
-            a_1_col = self[0][main_col]
-            tmat = []
-            for row in range(1, self.rows):
-                for col in range(self.cols):
-                    if col != main_col:
-                        tmat.append(self[row][col])
-            tmat = Matrix([self.rows - 1, self.cols - 1], tmat)
-
-            if tmat.rows == tmat.cols == 3:
-                if flag:
-                    res += a_1_col * tmat.mini_det()
-                    flag = False
-                else:
-                    res -= a_1_col * tmat.mini_det()
-                    flag = True
-            else:
-                tmat.determinant()
-        return res
-
-
-
-
-
-
-        # res = 0
-        # for a in range(self.cols):
-        #     temp_mat = []
-        #     for row in range(self.rows):
-        #         for col in range(self.cols):
-        #             if row != 0 and col != a:
-        #                 temp_mat.append(self[row][col])
-        #     temp_mat = Matrix([len(self[a + 1::]), len(self[a + 1::])], temp_mat)
-        #     print(temp_mat)
-        #     flag = True
-        #     if temp_mat.rows == temp_mat.cols == 3:
-        #         for col in range(temp_mat.cols):
-        #             a_1_col = temp_mat[0][col]
-        #             tmat = []
-        #             for trow in range(temp_mat.rows):
-        #                 for tcol in range(temp_mat.cols):
-        #                     if trow != 0 and tcol != temp_mat[0][col]:
-        #                         tmat.append(temp_mat[trow][tcol])
-        #             if flag:
-        #                 res += a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
-        #                 flag = False
-        #             else:
-        #                 res -= a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
-        #                 flag = True
-        #         print(res)
-        #     temp_mat.determinant()
+    def QR_decomposition(self):
+        ort_set = self.ortoganal_set()
+        Q = ort_set.normalization()
+        Q_T = Q.transposition()
+        R = Q_T * self
+        print(Q)
+        print(R)
 
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
@@ -407,13 +458,15 @@ class Matrix:
 # exGrevil = Matrix([4, 3], [1,-1,0,-1,2,1,2,-3,-1,0,1,1])
 # exGrevil = Matrix([3, 4], [1, -1, 2, 0, -1, 2, -3, 1, 0, 1, -1, 1])
 # exGauss = Matrix([3, 4], [1, 2, 3, 4, 1, 2, 5, 6, 3, 6, 13, 16])
-ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
+# ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
 # ex_skeletal = Matrix([3, 3], [1, -2, 3, 4, 0, 6, -7, 8, 9])
+# ex_skeletal = Matrix([4, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1, 1, 1, 1])
+ex_skeletal = Matrix([4, 3], [1, 2, 3, -1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 # print(exGauss)
 print(ex_skeletal)
 
-print(ex_skeletal.determinant())
+print(ex_skeletal.QR_decomposition())
 # print(exGauss.gauss())
 
 # numMatrixA = np.array([[1, 2, 3], [4, 5, 6]])
