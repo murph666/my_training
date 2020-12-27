@@ -392,6 +392,12 @@ class Matrix:
             for i in range(self.rows):
                 self.matrix[i].insert(index_col, el[i][0])
 
+    def QR_decomposition(self):
+        Q = self.ortoganal_set()
+        Q_T = Q.transposition()
+        R = Q_T * self
+        return Q, R
+
     def gauss(self):
         res = deepcopy(self)
         n = 0
@@ -456,12 +462,6 @@ class Matrix:
         res = self * C_speudo
         return res
 
-    def QR_decomposition(self):
-        Q = self.ortoganal_set()
-        Q_T = Q.transposition()
-        R = Q_T * self
-        return Q, R
-
     def eig(self):
         temp = deepcopy(self)
         Q, R = temp.QR_decomposition()
@@ -472,6 +472,48 @@ class Matrix:
             A_temp = R * Q
             Q_res *= Q
         return Q_res, A_temp
+
+    def singular(self):
+        b_i = Matrix([self.rows, 1], 0)
+        l = []
+        s = []
+        r = []
+        X = deepcopy(self)
+        while abs(X.euclidNorm()) > 0.001:
+            a_j = Matrix([self.rows, 1], 1)
+            F = 0
+            F_pr = 0
+            ii = 0
+        while (ii == 0 or abs(F) > 0.001) and (
+                (ii < 2) or (abs((F_pr - F) / F * 1000)) > 0.001):
+            F_pr = F
+            for i in range(self.rows):
+                sumxa = 0
+                sumaa = 0
+                for j in range(len(a_j)):
+                    sumxa += (X[i][j] * a_j[j][0])
+                for j in range(len(a_j)):
+                    sumaa += (a_j[j][0] ** 2)
+                b_i[i][0] = sumxa / sumaa
+            for i in range(self.cols):
+                sumxb = 0
+                sumbb = 0
+                for j in range(len(b_i)):
+                    sumxb += (b_i[j][0] * X[j][i])
+                for j in range(len(b_i)):
+                    sumbb += (b_i[j][0] ** 2)
+                a_j[i][0] = sumxb / sumbb
+            F = 0
+            for i in range(self.rows):
+                for j in range(self.cols):
+                    F = F + (X[i][j] - b_i[i][0] * a_j[j][0]) ** 2
+            F = F / 2
+            ii += 1
+        # Xc = b_i * a_j.transposition()
+        # X = X * Xc
+        # s = (a_j.euclidNorm() * b_i.euclidNorm()).insert_col(s)
+        # r = m.AddCol(r, m.mul(a_j, (1 / m.EuclidNorm(a_j))))
+        # l = m.AddCol(l, m.mul(b_i, (1 / m.EuclidNorm(b_i))))
 
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
