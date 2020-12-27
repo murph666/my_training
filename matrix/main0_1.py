@@ -104,7 +104,7 @@ class Matrix:
                 for row in range(self.rows):
                     for col in range(self.cols):
                         res[row][col] = self.matrix[row][col] * other[0][0]
-                        if abs(res[row][col]) < 0.001: res[row][col] = 0
+                        round(res[row][col], 4)
                 return res
 
         elif isinstance(other, (int, float)):
@@ -112,6 +112,7 @@ class Matrix:
             for row in range(self.rows):
                 for col in range(self.cols):
                     res[row][col] = self.matrix[row][col] * other
+                    round(res[row][col], 4)
             return res
 
             # elif self.rows == other.cols:
@@ -304,43 +305,17 @@ class Matrix:
                 tmat.determinant()
         return res
 
-        # res = 0
-        # for a in range(self.cols):
-        #     temp_mat = []
-        #     for row in range(self.rows):
-        #         for col in range(self.cols):
-        #             if row != 0 and col != a:
-        #                 temp_mat.append(self[row][col])
-        #     temp_mat = Matrix([len(self[a + 1::]), len(self[a + 1::])], temp_mat)
-        #     print(temp_mat)
-        #     flag = True
-        #     if temp_mat.rows == temp_mat.cols == 3:
-        #         for col in range(temp_mat.cols):
-        #             a_1_col = temp_mat[0][col]
-        #             tmat = []
-        #             for trow in range(temp_mat.rows):
-        #                 for tcol in range(temp_mat.cols):
-        #                     if trow != 0 and tcol != temp_mat[0][col]:
-        #                         tmat.append(temp_mat[trow][tcol])
-        #             if flag:
-        #                 res += a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
-        #                 flag = False
-        #             else:
-        #                 res -= a_1_col * (tmat[0] * tmat[2] - tmat[1] * tmat[3])
-        #                 flag = True
-        #         print(res)
-        #     temp_mat.determinant()
-
     def scalar_multiplication(self, b):
         res = 0
         for row in range(self.rows):
-            res += self[row][0] * b[row][0]
+            res += round(self[row][0] * b[row][0], 4)
         return res
 
     def projection(self, b):
-        res = self.scalar_multiplication(b)
+        res = b.scalar_multiplication(self)
         denumirator = self.scalar_multiplication(self)
         res /= denumirator
+        round(res, 4)
         res = self * res
         return res
 
@@ -354,10 +329,11 @@ class Matrix:
             for col in range(main_col):
                 cur_b = res.get_col(col)
                 P_cur = cur_b.projection(cur_a)
-                P -= P_cur
-            cur_b = cur_a + P
+                P += P_cur
+            cur_b = cur_a - P
             res.change(cur_b, main_col, 'col')
             P = Matrix([self.rows, 1], 0)
+        res = res.normalization()
         return res
 
     def normalization(self):
@@ -367,7 +343,7 @@ class Matrix:
             cur_col_length = 0
             for rw in range(cur_col.rows):
                 cur_col_length += cur_col[rw][0] ** 2
-            cur_col_length = -1 / sqrt(cur_col_length)
+            cur_col_length = 1 / sqrt(cur_col_length)
             res = res.mul_col_by_el(col, cur_col_length)
         return res
 
@@ -450,18 +426,26 @@ class Matrix:
         return res
 
     def QR_decomposition(self):
-        ort_set = self.ortoganal_set()
-        Q = ort_set.normalization()
+        Q = self.ortoganal_set()
         Q_T = Q.transposition()
         R = Q_T * self
-        AA = Q * R
         return Q, R
+
+    def eig(self):
+        temp = deepcopy(self)
+        Q, R = temp.QR_decomposition()
+        Q_res = Q
+        for i in range(3000):
+            A_temp = R * Q
+            Q, R = A_temp.QR_decomposition()
+            Q_res *= Q
+        return Q_res, R
 
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
-exGauss = Matrix([4, 3], [4, 4, 8, 2, 2, 4, 3, 1, 0, 3, 7, 6])
-exGauss = Matrix([3, 3], [1, 2, 3, 3, 1, 5, 2, 4, 6])
-exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3])
+# exGauss = Matrix([4, 3], [4, 4, 8, 2, 2, 4, 3, 1, 0, 3, 7, 6])
+# exGauss = Matrix([3, 3], [1, 2, 3, 3, 1, 5, 2, 4, 6])
+# exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3])
 # exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
 # exGrevil = Matrix([3, 4], [2, 1, 1, 3, 1, 0, 1, -1, 1, 1, 0, 4])
 # exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
@@ -472,12 +456,16 @@ exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3]
 # ex_skeletal = Matrix([4, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1, 1, 1, 1])
 # ex_skeletal = Matrix([3, 3], [12, -51, 4, 6, 167, -68, -4, 24, -41])
 # ex_skeletal = Matrix([2, 2], [1, 2, 3, 4])
-print('__________________________Q______________________________')
-a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
-#a = np.array([[1, 1, 0], [-1, 1, -1], [0, 1, 1], [1, 1, 1]])
-q, r = np.linalg.qr(a)
-print(q, '\n-----------------------R------------------------\n', r)
-ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
-#ex_1 = Matrix([3, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1])
-Q, R, AA = ex_1.QR_decomposition()
-print(Q, '\n', R, '\n', AA)
+print('___________________________Q____________________________')
+#a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
+a = np.array([[0, 1, 6], [1, 1, 2], [0, 0, 1]])
+# a = np.array([[1, 1, 0], [-1, 1, -1], [0, 1, 1], [1, 1, 1]])
+q, r = np.linalg.eig(a)
+print(q, '\n---------------------------R----------------------------\n', r)
+print('________________________________________________________')
+#ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
+ex_1 = Matrix([3, 3], [0, 1, 6, 1, 1, 2, 0, 0, 1])
+# ex_1 = Matrix([3, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1])
+print(ex_1)
+Q, R = ex_1.eig()
+print(Q, '\n', R)
