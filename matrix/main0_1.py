@@ -354,9 +354,8 @@ class Matrix:
             for col in range(main_col):
                 cur_b = res.get_col(col)
                 P_cur = cur_b.projection(cur_a)
-                P = P + P_cur
-
-            cur_b = cur_a - P
+                P -= P_cur
+            cur_b = cur_a + P
             res.change(cur_b, main_col, 'col')
             P = Matrix([self.rows, 1], 0)
         return res
@@ -368,7 +367,7 @@ class Matrix:
             cur_col_length = 0
             for rw in range(cur_col.rows):
                 cur_col_length += cur_col[rw][0] ** 2
-            cur_col_length = 1 / sqrt(cur_col_length)
+            cur_col_length = -1 / sqrt(cur_col_length)
             res = res.mul_col_by_el(col, cur_col_length)
         return res
 
@@ -451,13 +450,12 @@ class Matrix:
         return res
 
     def QR_decomposition(self):
-        A = deepcopy(self)
-        ort_set = A.ortoganal_set()
+        ort_set = self.ortoganal_set()
         Q = ort_set.normalization()
         Q_T = Q.transposition()
-        R = Q_T * A
+        R = Q_T * self
+        AA = Q * R
         return Q, R
-
 
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
@@ -476,8 +474,10 @@ exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3]
 # ex_skeletal = Matrix([2, 2], [1, 2, 3, 4])
 print('__________________________Q______________________________')
 a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
+#a = np.array([[1, 1, 0], [-1, 1, -1], [0, 1, 1], [1, 1, 1]])
 q, r = np.linalg.qr(a)
 print(q, '\n-----------------------R------------------------\n', r)
 ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
-Q, R = ex_1.QR_decomposition()
-print(Q, '\n', R)
+#ex_1 = Matrix([3, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1])
+Q, R, AA = ex_1.QR_decomposition()
+print(Q, '\n', R, '\n', AA)
