@@ -361,6 +361,37 @@ class Matrix:
             else:
                 return '<error>'
 
+    def euclidNorm(self):
+        A = 0
+        for i in range(self.rows):
+            for j in range(self.cols):
+                A += self[i][j] ** 2
+        return sqrt(A)
+
+    def psInvSingular(self, Z, V_l):  # псевдообратная через сингулярное разложение
+        V = V_l.transposition()
+        U_l = self.transposition()
+        Z_pi = []
+        for i in range(Z.rows):
+            Z_pi.append([])
+            for j in range(Z.cols):
+                if i == j:
+                    Z_pi[i].append(1 / Z[i][j])
+                else:
+                    Z_pi[i].append(0)
+        Z_pi = Z_pi.transposition()
+        M_pi = V * Z_pi
+        M_pi = M_pi * U_l
+        return M_pi
+
+    def insert_col(self, el, index_col=None):
+        if index_col is None:
+            index_col = self.cols + 1
+        if self.rows == el.rows:
+            self.cols += 1
+            for i in range(self.rows):
+                self.matrix[i].insert(index_col, el[i][0])
+
     def gauss(self):
         res = deepcopy(self)
         n = 0
@@ -455,19 +486,20 @@ class Matrix:
 # ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
 # ex_skeletal = Matrix([3, 3], [1, -2, 3, 4, 0, 6, -7, 8, 9])
 # ex_skeletal = Matrix([4, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1, 1, 1, 1])
-#ex_1 = Matrix([3, 3], [12, -51, 4, 6, 167, -68, -4, 24, -41])
+# ex_1 = Matrix([3, 3], [12, -51, 4, 6, 167, -68, -4, 24, -41])
 # ex_skeletal = Matrix([2, 2], [1, 2, 3, 4])
 # print('___________________________Q____________________________')
-#a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
+# a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
 # a = np.array([[0, 1, 6], [1, 1, 2], [0, 0, 1]])
 # a = np.array([[1, 1, 0], [-1, 1, -1], [0, 1, 1], [1, 1, 1]])
 # q, r = np.linalg.eig(a)
 # print(q, '\n---------------------------R----------------------------\n', r)
 # print('________________________________________________________')
-#ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
-ex_1 = Matrix([3, 3], [0, 1, 6, 1, 1, 2, 0, 0, 1])
+# ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
+ex_1 = Matrix([3, 3], [[0, 1, 6], [1, 1, 2], [0, 0, 1]])
+ex_12 = Matrix([3, 1], [10, 20, 30])
 # ex_1 = Matrix([3, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1])
-print(ex_1)
+ex_1.insert_col(ex_12)
 Q, R = ex_1.eig()
-#Q, R = ex_1.eig()
+# Q, R = ex_1.eig()
 print(Q, '\n', R)
