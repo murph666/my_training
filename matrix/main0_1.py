@@ -1,7 +1,11 @@
 from copy import deepcopy
 from math import sqrt
+import numpy as np
+from numpy import linalg as LA
 from decimal import Decimal
 import numpy as np
+import scipy
+from scipy import linalg
 
 
 class Matrix:
@@ -38,7 +42,7 @@ class Matrix:
 
     def __str__(self):
         mtxStr = ''
-        mtxStr += '-------------- matrix --------------\n'
+        mtxStr += f'-------------- matrix --------------\n'
         for i in range(len(self.matrix)):
             mtxStr += (' '.join(map(lambda x: '{0:8.3f}'.format(x), self.matrix[i])) + '\n')
         mtxStr += '------------------------------------'
@@ -327,16 +331,15 @@ class Matrix:
         #         print(res)
         #     temp_mat.determinant()
 
-    @staticmethod
-    def scalar_multiplication(a, b):
+    def scalar_multiplication(self, b):
         res = 0
-        for row in range(a.rows):
-            res += a[row][0] * b[row][0]
+        for row in range(self.rows):
+            res += self[row][0] * b[row][0]
         return res
 
     def projection(self, b):
-        res = Matrix.scalar_multiplication(self, b)
-        denumirator = Matrix.scalar_multiplication(self, self)
+        res = self.scalar_multiplication(b)
+        denumirator = self.scalar_multiplication(self)
         res /= denumirator
         res = self * res
         return res
@@ -387,10 +390,14 @@ class Matrix:
         res = deepcopy(self)
         n = 0
         for i in range(res.rows):
-            if res[i][i] == 0:
-                res.swap_max_el_matrix(i)
+            try:
                 if res[i][i] == 0:
-                    n += 1
+                    res = res.swap_max_el_matrix(i)
+                    if res[i][i] == 0:
+                        n += 1
+            except IndexError:
+                res = res.del_zero_rows()
+                return res
             try:
                 c = 1 / res[i][i + n]
             except ZeroDivisionError:
@@ -444,33 +451,33 @@ class Matrix:
         return res
 
     def QR_decomposition(self):
-        ort_set = self.ortoganal_set()
+        A = deepcopy(self)
+        ort_set = A.ortoganal_set()
         Q = ort_set.normalization()
         Q_T = Q.transposition()
-        R = Q_T * self
-        print(Q)
-        print(R)
+        R = Q_T * A
+        return Q, R
+
 
 
 # exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
+exGauss = Matrix([4, 3], [4, 4, 8, 2, 2, 4, 3, 1, 0, 3, 7, 6])
+exGauss = Matrix([3, 3], [1, 2, 3, 3, 1, 5, 2, 4, 6])
+exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3])
 # exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
 # exGrevil = Matrix([3, 4], [2, 1, 1, 3, 1, 0, 1, -1, 1, 1, 0, 4])
-# exGrevil = Matrix([4, 3], [1,-1,0,-1,2,1,2,-3,-1,0,1,1])
+# exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
 # exGrevil = Matrix([3, 4], [1, -1, 2, 0, -1, 2, -3, 1, 0, 1, -1, 1])
 # exGauss = Matrix([3, 4], [1, 2, 3, 4, 1, 2, 5, 6, 3, 6, 13, 16])
 # ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
 # ex_skeletal = Matrix([3, 3], [1, -2, 3, 4, 0, 6, -7, 8, 9])
 # ex_skeletal = Matrix([4, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1, 1, 1, 1])
-ex_skeletal = Matrix([4, 3], [1, 2, 3, -1, 1, 1, 1, 1, 1, 1, 1, 1])
-
-# print(exGauss)
-print(ex_skeletal)
-
-print(ex_skeletal.QR_decomposition())
-# print(exGauss.gauss())
-
-# numMatrixA = np.array([[1, 2, 3], [4, 5, 6]])
-# numMatrixB = np.array([[7, 8], [9, 1], [2, 3]])
-#
-# print(np.dot(numMatrixA, numMatrixB))
-# print(np.dot(numMatrixB, numMatrixA))
+# ex_skeletal = Matrix([3, 3], [12, -51, 4, 6, 167, -68, -4, 24, -41])
+# ex_skeletal = Matrix([2, 2], [1, 2, 3, 4])
+print('__________________________Q______________________________')
+a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
+q, r = np.linalg.qr(a)
+print(q, '\n-----------------------R------------------------\n', r)
+ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
+Q, R = ex_1.QR_decomposition()
+print(Q, '\n', R)
