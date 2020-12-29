@@ -361,6 +361,39 @@ class Matrix:
             else:
                 return '<error>'
 
+    def down_triangular(self):
+        flag = True
+        for col in range(self.cols):
+            for row in range(col + 1, self.rows):
+                if abs(self[row][col]) != 0:
+                    flag = False
+                    return flag
+        return flag
+
+    def diag_matr(self):
+        flag = True
+        for i in range(len(self.matrix)):
+            for j in range(len(self.matrix[0])):
+                if i != j:
+                    if abs(int(self.matrix[i][j] * 100)) > 1:
+                        flag = False
+                        break
+            if not flag:
+                break
+        return flag
+
+    def upper_triangular(self):
+        flag = True
+        for i in range(len(self.matrix)):
+            for j in range(len(self.matrix[0])):
+                if i > j:
+                    if abs(int(self.matrix[i][j] * 100)) > 1:
+                        flag = False
+                        break
+            if not flag:
+                break
+        return flag
+
     def euclidNorm(self):
         A = 0
         for i in range(self.rows):
@@ -467,38 +500,7 @@ class Matrix:
         res = self * C_speudo
         return res
 
-    def down_triangular(self):
-        flag = True
-        for col in range(self.cols):
-            for row in range(col + 1, self.rows):
-                if abs(self[row][col]) != 0:
-                    flag = False
-                    return flag
-        return flag
 
-    def diag_matr(self):
-        flag = True
-        for i in range(len(self.matrix)):
-            for j in range(len(self.matrix[0])):
-                if i != j:
-                    if abs(int(self.matrix[i][j] * 100)) > 1:
-                        flag = False
-                        break
-            if not flag:
-                break
-        return flag
-
-    def upper_triangular(self):
-        flag = True
-        for i in range(len(self.matrix)):
-            for j in range(len(self.matrix[0])):
-                if i > j:
-                    if abs(int(self.matrix[i][j] * 100)) > 1:
-                        flag = False
-                        break
-            if not flag:
-                break
-        return flag
 
     def eig(self):
         temp = deepcopy(self)
