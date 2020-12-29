@@ -387,10 +387,15 @@ class Matrix:
     def insert_col(self, el, index_col=None):
         if index_col is None:
             index_col = self.cols + 1
-        if self.rows == el.rows:
-            self.cols += 1
-            for i in range(self.rows):
-                self.matrix[i].insert(index_col, el[i][0])
+        try:
+            if self.rows == el.rows:
+                self.cols += 1
+                for i in range(self.rows):
+                    self.matrix[i].insert(index_col, el[i][0])
+        except:
+            pass
+        if isinstance(el, (int, float)):
+            self.matrix[0].insert(index_col, el)
 
     def QR_decomposition(self):
         Q = self.ortoganal_set()
@@ -462,86 +467,99 @@ class Matrix:
         res = self * C_speudo
         return res
 
+    def down_triangular(self):
+        flag = True
+        for col in range(self.cols):
+            for row in range(col + 1, self.rows):
+                if abs(self[row][col]) != 0:
+                    flag = False
+                    return flag
+        return flag
+
+    def diag_matr(self):
+        flag = True
+        for i in range(len(self.matrix)):
+            for j in range(len(self.matrix[0])):
+                if i != j:
+                    if abs(int(self.matrix[i][j] * 100)) > 1:
+                        flag = False
+                        break
+            if not flag:
+                break
+        return flag
+
+    def upper_triangular(self):
+        flag = True
+        for i in range(len(self.matrix)):
+            for j in range(len(self.matrix[0])):
+                if i > j:
+                    if abs(int(self.matrix[i][j] * 100)) > 1:
+                        flag = False
+                        break
+            if not flag:
+                break
+        return flag
+
     def eig(self):
         temp = deepcopy(self)
         Q, R = temp.QR_decomposition()
         A_temp = R * Q
         Q_res = Q
-        for i in range(7):
+        i = 0
+        while (not A_temp.diag_matr()) and (not A_temp.upper_triangular()) and (not A_temp.down_triangular()):
+            # for i in range(7):
             Q, R = A_temp.QR_decomposition()
             A_temp = R * Q
             Q_res *= Q
-        return Q_res, A_temp
+            i += 1
+        return Q_res, A_temp, i
 
     def singular(self):
         b_i = Matrix([self.rows, 1], 0)
-        l = []
-        s = []
-        r = []
+        l = Matrix([1, 0], 0)
+        s = Matrix([1, 0], 0)
+        r = Matrix([1, 0], 0)
         X = deepcopy(self)
         while abs(X.euclidNorm()) > 0.001:
             a_j = Matrix([self.rows, 1], 1)
             F = 0
             F_pr = 0
             ii = 0
-        while (ii == 0 or abs(F) > 0.001) and (
-                (ii < 2) or (abs((F_pr - F) / F * 1000)) > 0.001):
-            F_pr = F
-            for i in range(self.rows):
-                sumxa = 0
-                sumaa = 0
-                for j in range(len(a_j)):
-                    sumxa += (X[i][j] * a_j[j][0])
-                for j in range(len(a_j)):
-                    sumaa += (a_j[j][0] ** 2)
-                b_i[i][0] = sumxa / sumaa
-            for i in range(self.cols):
-                sumxb = 0
-                sumbb = 0
-                for j in range(len(b_i)):
-                    sumxb += (b_i[j][0] * X[j][i])
-                for j in range(len(b_i)):
-                    sumbb += (b_i[j][0] ** 2)
-                a_j[i][0] = sumxb / sumbb
-            F = 0
-            for i in range(self.rows):
-                for j in range(self.cols):
-                    F = F + (X[i][j] - b_i[i][0] * a_j[j][0]) ** 2
-            F = F / 2
-            ii += 1
-        # Xc = b_i * a_j.transposition()
-        # X = X * Xc
-        # s = (a_j.euclidNorm() * b_i.euclidNorm()).insert_col(s)
-        # r = m.AddCol(r, m.mul(a_j, (1 / m.EuclidNorm(a_j))))
-        # l = m.AddCol(l, m.mul(b_i, (1 / m.EuclidNorm(b_i))))
+            while (ii == 0 or abs(F) > 0.001) and (
+                    (ii < 2) or (abs((F_pr - F) / F * 1000)) > 0.001):
+                F_pr = F
+                for i in range(self.rows):
+                    sumxa = 0
+                    sumaa = 0
+                    for j in range(a_j.rows):
+                        sumxa += (X[i][j] * a_j[j][0])
+                    for j in range(a_j.rows):
+                        sumaa += (a_j[j][0] ** 2)
+                    b_i[i][0] = sumxa / sumaa
+                for i in range(self.cols):
+                    sumxb = 0
+                    sumbb = 0
+                    for j in range(b_i.rows):
+                        sumxb += (b_i[j][0] * X[j][i])
+                    for j in range(b_i.rows):
+                        sumbb += (b_i[j][0] ** 2)
+                    a_j[i][0] = sumxb / sumbb
+                F = 0
+                for i in range(self.rows):
+                    for j in range(self.cols):
+                        F = F + (X[i][j] - b_i[i][0] * a_j[j][0]) ** 2
+                F = F / 2
+                ii += 1
+            X *= b_i * a_j.transposition()
+            s.insert_col(a_j.euclidNorm() * b_i.euclidNorm())
+            r.insert_col(a_j * (1 / a_j.euclidNorm()))
+            l.insert_col(b_i * (1 / b_i.euclidNorm()))
+        return l, s, r
 
 
-# exGauss = Matrix([5, 4], [2, 1, -2, 6, 3, 0, 0, -1, 1, -1, 2, -7, 5, -2, 4, -15, 7, 2, -4, 11])
-# exGauss = Matrix([4, 3], [4, 4, 8, 2, 2, 4, 3, 1, 0, 3, 7, 6])
-# exGauss = Matrix([3, 3], [1, 2, 3, 3, 1, 5, 2, 4, 6])
-# exGauss = Matrix([3, 6], [0, 2, 0, 3, 4, 1, 2, 4, 4, 6, 8, 2, 3, 6, 6, 9, 12, 3])
-# exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
-# exGrevil = Matrix([3, 4], [2, 1, 1, 3, 1, 0, 1, -1, 1, 1, 0, 4])
-# exGrevil = Matrix([4, 3], [1, -1, 0, -1, 2, 1, 2, -3, -1, 0, 1, 1])
-# exGrevil = Matrix([3, 4], [1, -1, 2, 0, -1, 2, -3, 1, 0, 1, -1, 1])
-# exGauss = Matrix([3, 4], [1, 2, 3, 4, 1, 2, 5, 6, 3, 6, 13, 16])
-# ex_skeletal = Matrix([4, 4], [3, -3, -5, 8, -3, 2, 4, -6, 2, -5, -7, 5, -4, 3, 5, -6])
-# ex_skeletal = Matrix([3, 3], [1, -2, 3, 4, 0, 6, -7, 8, 9])
-# ex_skeletal = Matrix([4, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1, 1, 1, 1])
-# ex_1 = Matrix([3, 3], [12, -51, 4, 6, 167, -68, -4, 24, -41])
-# ex_skeletal = Matrix([2, 2], [1, 2, 3, 4])
-# print('___________________________Q____________________________')
-# a = np.array([[2, 3, 5], [7, 11, 13], [17, 19, 23]])
-# a = np.array([[0, 1, 6], [1, 1, 2], [0, 0, 1]])
-# a = np.array([[1, 1, 0], [-1, 1, -1], [0, 1, 1], [1, 1, 1]])
-# q, r = np.linalg.eig(a)
-# print(q, '\n---------------------------R----------------------------\n', r)
-# print('________________________________________________________')
-# ex_1 = Matrix([3, 3], [2, 3, 5, 7, 11, 13, 17, 19, 23])
-ex_1 = Matrix([3, 3], [[0, 1, 6], [1, 1, 2], [0, 0, 1]])
-ex_12 = Matrix([3, 1], [10, 20, 30])
-# ex_1 = Matrix([3, 3], [1, 1, 0, -1, 1, -1, 0, 1, 1])
-ex_1.insert_col(ex_12)
-Q, R = ex_1.eig()
-# Q, R = ex_1.eig()
-print(Q, '\n', R)
+# ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
+ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
+# Q, R, i = ex.eig()
+# print(Q, R, i, sep='\n')
+l, s, r = ex.singular()
+print(l, s, r, sep='\n')
