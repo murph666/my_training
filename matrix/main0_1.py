@@ -1,11 +1,5 @@
 from copy import deepcopy
 from math import sqrt
-import numpy as np
-from numpy import linalg as LA
-from decimal import Decimal
-import numpy as np
-import scipy
-from scipy import linalg
 
 
 class Matrix:
@@ -355,9 +349,8 @@ class Matrix:
                         return True
             elif self.rows > self.cols:  # Пришел столбец
                 for row in range(self.rows):
-                    if abs(self[row][0]) > 0.001:
-                        if self[row][0] != 0:
-                            return True
+                    if self[row][0] != 0:
+                        return True
             else:
                 return '<error>'
 
@@ -560,12 +553,3 @@ class Matrix:
             r.insert_col(a_j * (1 / a_j.euclidNorm()))
             l.insert_col(b_i * (1 / b_i.euclidNorm()))
         return l.del_zero_cols(), s, r.del_zero_cols()
-
-
-# ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
-ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
-# Q, R, i = ex.eig()
-# print(Q, R, i, sep='\n')
-l, s, r = ex.singular()
-print('Левые сингулярные собственные векторы:', l, 'Сингулярные собственные числа:', s,
-      'Правые сингулярные собственные векторы:', r, sep='\n')
