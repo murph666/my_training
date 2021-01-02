@@ -395,11 +395,16 @@ class Matrix:
         return flag
 
     def euclidNorm(self):
-        A = 0
+        res = 0
         for i in range(self.rows):
             for j in range(self.cols):
-                A += self[i][j] ** 2
-        return sqrt(A)
+                try:
+                    res += self[i][j] ** 2
+                except OverflowError:
+                    print(self)
+                    input("PRESS ENTER TO CONTINUE.")
+        res = round(sqrt(res), 3)
+        return res
 
     def psInvSingular(self, Z, V_l):  # псевдообратная через сингулярное разложение
         V = V_l.transposition()
@@ -420,14 +425,14 @@ class Matrix:
     def insert_col(self, el, index_col=None):
         if index_col is None:
             index_col = self.cols + 1
-        try:
+        if isinstance(el, Matrix):
             if self.rows == el.rows:
                 self.cols += 1
                 for i in range(self.rows):
                     self.matrix[i].insert(index_col, el[i][0])
-        except:
-            pass
-        if isinstance(el, (int, float)):
+            self = self.del_zero_cols()
+
+        elif isinstance(el, (int, float)):
             self.matrix[0].insert(index_col, el)
 
     def QR_decomposition(self):
@@ -500,8 +505,6 @@ class Matrix:
         res = self * C_speudo
         return res
 
-
-
     def eig(self):
         temp = deepcopy(self)
         Q, R = temp.QR_decomposition()
@@ -509,7 +512,6 @@ class Matrix:
         Q_res = Q
         i = 0
         while (not A_temp.diag_matr()) and (not A_temp.upper_triangular()) and (not A_temp.down_triangular()):
-            # for i in range(7):
             Q, R = A_temp.QR_decomposition()
             A_temp = R * Q
             Q_res *= Q
@@ -518,9 +520,9 @@ class Matrix:
 
     def singular(self):
         b_i = Matrix([self.rows, 1], 0)
-        l = Matrix([1, 0], 0)
+        l = Matrix([self.rows, 1], 0)
         s = Matrix([1, 0], 0)
-        r = Matrix([1, 0], 0)
+        r = Matrix([self.rows, 1], 0)
         X = deepcopy(self)
         while abs(X.euclidNorm()) > 0.001:
             a_j = Matrix([self.rows, 1], 1)
@@ -531,32 +533,33 @@ class Matrix:
                     (ii < 2) or (abs((F_pr - F) / F * 1000)) > 0.001):
                 F_pr = F
                 for i in range(self.rows):
-                    sumxa = 0
-                    sumaa = 0
+                    sumxa, sumaa = 0, 0
                     for j in range(a_j.rows):
                         sumxa += (X[i][j] * a_j[j][0])
                     for j in range(a_j.rows):
                         sumaa += (a_j[j][0] ** 2)
                     b_i[i][0] = sumxa / sumaa
+
                 for i in range(self.cols):
-                    sumxb = 0
-                    sumbb = 0
+                    sumxb, sumbb = 0, 0
                     for j in range(b_i.rows):
                         sumxb += (b_i[j][0] * X[j][i])
                     for j in range(b_i.rows):
                         sumbb += (b_i[j][0] ** 2)
                     a_j[i][0] = sumxb / sumbb
+
                 F = 0
                 for i in range(self.rows):
                     for j in range(self.cols):
                         F = F + (X[i][j] - b_i[i][0] * a_j[j][0]) ** 2
                 F = F / 2
                 ii += 1
-            X *= b_i * a_j.transposition()
+
+            X -= b_i * a_j.transposition()
             s.insert_col(a_j.euclidNorm() * b_i.euclidNorm())
             r.insert_col(a_j * (1 / a_j.euclidNorm()))
             l.insert_col(b_i * (1 / b_i.euclidNorm()))
-        return l, s, r
+        return l.del_zero_cols(), s, r.del_zero_cols()
 
 
 # ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
@@ -564,4 +567,5 @@ ex = Matrix([3, 3], [[1, 2, 1], [3, 3, 2], [0, 3, 4]])
 # Q, R, i = ex.eig()
 # print(Q, R, i, sep='\n')
 l, s, r = ex.singular()
-print(l, s, r, sep='\n')
+print('Левые сингулярные собственные векторы:', l, 'Сингулярные собственные числа:', s,
+      'Правые сингулярные собственные векторы:', r, sep='\n')
