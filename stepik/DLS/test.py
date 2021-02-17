@@ -1,8 +1,23 @@
-from functools import reduce
+def process(sentences):
+    result = []
+    for elem in sentences:
+        if elem.isalpha():
+            result.append(elem)
+        else:
+            if not elem.isnumeric():
+                result.append(' '.join([i for i in elem.split(' ') if i.isalpha()]))
+    result.remove('')
+    return result
 
 
-def almost_double_factorial(n):
-    return reduce(lambda s, x: s * x, list(filter(lambda x: x % 2 != 0, [i for i in range(n)] if n != 0 else [1])))
+def process2(sentences):
+    result = []
+    word = [x.split() for x in sentences]
+    for el in word:
+        el = list(filter(lambda x: x.isalpha(), el))
+        result.append(' '.join(el))
+    return result
 
 
-print(almost_double_factorial(0))
+# print(process(['1 thousand devils', 'My name is 9Pasha', 'Room #125 costs $100', '888', '888abc']))
+print(process2(['1 thousand devils', 'My name is 9Pasha', 'Room #125 costs $100', '888', '888abc']))
