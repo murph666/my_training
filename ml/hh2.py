@@ -37,9 +37,11 @@ def print_regression_metrics(y_true, y_pred):
 data = load_boston()
 
 X, y = data['data'], data['target']
-x_train, x_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
 
 #X = np.hstack([np.ones(X.shape[0])[:, np.newaxis], X])
+x_train, x_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
+
+
 theta = linreg_linear(x_train, y_train)
 
 y_pred = x_valid.dot(theta)
